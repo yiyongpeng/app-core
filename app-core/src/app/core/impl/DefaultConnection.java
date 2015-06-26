@@ -164,6 +164,7 @@ public class DefaultConnection extends POJO implements Connection {
 				return;
 			closed = true;
 
+			if(session!=null&&session.getServerHandler()!=null){
 			Connector<Connection, Session> connector = this.session.getServerHandler().getConnector();
 			boolean selecting = connector.isSelecting((SelectableChannel) channel);
 			// close channel
@@ -171,6 +172,7 @@ public class DefaultConnection extends POJO implements Connection {
 			//
 			if (selecting) {
 				((DefaultConnector) connector).onClosed(this);
+			}
 			}
 		} catch (IOException e) {
 		} finally {

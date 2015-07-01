@@ -279,6 +279,7 @@ public class DefaultConnector<R, S> implements Connector<R, S>, Runnable {
 		synchronized (this) {
 			try {
 				selector = Selector.open();
+				onStart();
 				thread = new Thread(this, name);
 				thread.setDaemon(true);
 				thread.start();
@@ -287,6 +288,9 @@ public class DefaultConnector<R, S> implements Connector<R, S>, Runnable {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	protected void onStart() {
 	}
 
 	@Override

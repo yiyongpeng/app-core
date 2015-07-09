@@ -11,7 +11,6 @@ import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -44,7 +43,7 @@ public class DefaultServerHandler extends
 
 	public static final String ATTR_MAX_MESSATE_QUEUE_CAPACITY = "__MAX_MESSATE_QUEUE_CAPACITY__";
 
-	public static int MAX_MESSAGE_QUEUE_CAPACITY = 50;
+	public static int MAX_MESSAGE_QUEUE_CAPACITY = 256;
 
 	private SessionFactory sessionFactory;
 
@@ -55,7 +54,6 @@ public class DefaultServerHandler extends
 
 	private Connector<Connection, Session> connector;
 	private Notifier<Connection, Session> notifier;
-	private ExecutorService executor;
 	private TimerManager timerManager;
 
 	private boolean messageFlow = true;
@@ -71,7 +69,6 @@ public class DefaultServerHandler extends
 	public void init(Connector<Connection, Session> connector) {
 		this.connector = connector;
 		this.notifier = connector.getNotifier();
-		this.executor = connector.getExecutor();
 		this.sessionFactory = instanceSessionFactory();
 
 		this.notifier.addHandler(this);
@@ -120,7 +117,7 @@ public class DefaultServerHandler extends
 	}
 
 	public Executor getExecutor() {
-		return executor;
+		return connector.getExecutor();
 	}
 
 	@Override
@@ -130,11 +127,7 @@ public class DefaultServerHandler extends
 
 	@Override
 	public void execute(Runnable run) {
-		if (executor == null || executor.isShutdown()) {
-			log.error("execute failed!  runable:" + run);
-			return;
-		}
-		executor.execute(run);
+		connector.getExecutor().execute(run);
 	}
 
 	@Override

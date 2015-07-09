@@ -35,4 +35,8 @@ public interface Connector<C, S> {
 	boolean isSelecting(SelectableChannel channel);
 	
 	String getName();
+
+	MessageReader<C, S> getMessageReader();
+	
+	MessageWriter<C, S> getMessageWriter();
 }

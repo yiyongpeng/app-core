@@ -63,7 +63,7 @@ public class DefaultMessageWriter<R, S> implements MessageWriter<R, S> {
 
 	@Override
 	public void processRequest(SelectionKey key) {
-		executor.execute(createTask(key));
+		execute(createTask(key));
 	}
 
 	protected Runnable createTask(SelectionKey key) {
@@ -99,6 +99,11 @@ public class DefaultMessageWriter<R, S> implements MessageWriter<R, S> {
 			connector.processRead(key);// 报文完整写出，请求读取
 		else
 			connector.processWrite(key);// 报文未写完，继续请求写
+	}
+	
+	@Override
+	public void execute(Runnable runnable) {
+		executor.execute(runnable);
 	}
 
 	public void setExecutor(Executor executor) {

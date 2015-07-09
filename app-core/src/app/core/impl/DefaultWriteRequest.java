@@ -10,19 +10,19 @@ import org.apache.log4j.Logger;
 
 import app.core.Connection;
 import app.core.MessageInput;
-import app.core.ServerContext;
+import app.core.MessageWriter;
 import app.core.Session;
 import app.core.WriteRequest;
 
 public class DefaultWriteRequest implements WriteRequest, Runnable {
-	private ServerContext context;
-	private Connection conn;
+	private MessageWriter<Connection, Session> writer;
 
+	private Connection conn;
 	private BlockingQueue<Session> flushQueue;
 
-	private int packetCount;
+	private long packetCount;
 	private long nanoTime;
-	private int byteCount;
+	private long byteCount;
 
 	public DefaultWriteRequest(Connection conn) {
 		init(conn);
@@ -34,13 +34,13 @@ public class DefaultWriteRequest implements WriteRequest, Runnable {
 			flushQueue.clear();
 		flushQueue = null;
 		conn = null;
-		context = null;
+		writer = null;
 	}
 
 	@Override
 	public void init(Connection conn) {
 		this.conn = conn;
-		this.context = conn.getSession().getServerHandler();
+		this.writer = conn.getSession().getServerHandler().getConnector().getMessageWriter();
 		this.flushQueue = new ArrayBlockingQueue<Session>(10);
 		this.byteCount = 0;
 		this.nanoTime = 0;
@@ -87,7 +87,7 @@ public class DefaultWriteRequest implements WriteRequest, Runnable {
 		} finally {
 			synchronized (this) {
 				if (nomal && this.flushQueue.size() > 0)
-					context.execute(this);// 队列没有发送完，继续发送
+					writer.execute(this);// 队列没有发送完，继续发送
 				else
 					conn.setBusy(false);// 全部发送完成，发送结束
 			}
@@ -121,7 +121,7 @@ public class DefaultWriteRequest implements WriteRequest, Runnable {
 		synchronized (this) {
 			if (!conn.isBusy()) {
 				conn.setBusy(true);
-				context.execute(this);
+				writer.execute(this);
 			} else {
 				// log.warn("Already flush, Connect[" + conn.getInetAddress()
 				// + "] is writing busy!");
@@ -130,7 +130,7 @@ public class DefaultWriteRequest implements WriteRequest, Runnable {
 	}
 
 	@Override
-	public int getByteCount() {
+	public long getByteCount() {
 		return byteCount;
 	}
 
@@ -140,7 +140,7 @@ public class DefaultWriteRequest implements WriteRequest, Runnable {
 	}
 
 	@Override
-	public int getPacketCount() {
+	public long getPacketCount() {
 		return packetCount;
 	}
 

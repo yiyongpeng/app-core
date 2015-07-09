@@ -21,6 +21,7 @@ public class DefaultMessageQueue implements MessageQueue {
 
 	@Override
 	public Object removeFirst() {
+		if(queue==null)return null;
 		try {
 			Object message = queue.take();
 			if (message instanceof ByteBuffer) {
@@ -35,6 +36,7 @@ public class DefaultMessageQueue implements MessageQueue {
 
 	@Override
 	public void putLast(Object message) {
+		if(queue==null)return;
 		try {
 			queue.put(message);
 			if (message instanceof ByteBuffer) {
@@ -47,21 +49,24 @@ public class DefaultMessageQueue implements MessageQueue {
 
 	@Override
 	public boolean isEmpty() {
-		return queue.isEmpty();
+		return (queue==null)||queue.isEmpty();
 	}
 
 	@Override
 	public int size() {
+		if(queue==null)return 0;
 		return queue.size();
 	}
 
 	@Override
 	public Object getFirst() {
+		if(queue==null)return null;
 		return queue.element();
 	}
 
 	@Override
 	public boolean isFulled() {
+		if(queue==null)return false;
 		return queue.size() >= capacity;
 	}
 
@@ -75,6 +80,7 @@ public class DefaultMessageQueue implements MessageQueue {
 	@Override
 	public Collection<Object> removeAll() {
 		Collection<Object> list = new ArrayList<Object>();
+		if(queue==null)return list;
 		queue.drainTo(list);
 		bytesSize = 0;
 		return list;
@@ -83,5 +89,12 @@ public class DefaultMessageQueue implements MessageQueue {
 	@Override
 	public int getBytesSize() {
 		return bytesSize;
+	}
+	
+	@Override
+	public void destory() {
+		BlockingQueue<Object> tmp = queue;
+		queue = null;
+		tmp.clear();
 	}
 }

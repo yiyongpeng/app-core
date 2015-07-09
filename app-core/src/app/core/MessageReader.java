@@ -10,4 +10,5 @@ public interface MessageReader<R, S> {
 
 	void destory();
 
+	void execute(Runnable runnable);
 }

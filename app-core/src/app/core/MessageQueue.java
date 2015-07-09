@@ -8,4 +8,6 @@ public interface MessageQueue extends MessageInput, MessageOutput {
 	int size();
 
 	int getBytesSize();
+
+	void destory();
 }

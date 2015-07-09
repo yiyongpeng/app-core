@@ -8,9 +8,9 @@ public interface WriteRequest extends Runnable {
 
 	void flush(Session session);
 
-	int getPacketCount();
+	long getPacketCount();
 
-	int getByteCount();
+	long getByteCount();
 
 	long getNanoTime();
 

@@ -10,4 +10,6 @@ public interface MessageWriter<R, S> {
 
 	void destory();
 
+	void execute(Runnable runnable);
+
 }

@@ -430,6 +430,16 @@ public class DefaultConnector<R, S> implements Connector<R, S>, Runnable {
 	}
 
 	@Override
+	public MessageReader<R, S> getMessageReader() {
+		return reader;
+	}
+	
+	@Override
+	public MessageWriter<R, S> getMessageWriter() {
+		return writer;
+	}
+	
+	@Override
 	public void wakeup() {
 		if (selector != null) {
 			selector.wakeup();

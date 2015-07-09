@@ -5,7 +5,6 @@ import java.nio.channels.SocketChannel;
 
 import org.apache.log4j.Logger;
 
-import app.core.AccessException;
 import app.core.Connection;
 import app.core.MessageOutput;
 import app.core.MessageQueue;
@@ -19,9 +18,9 @@ public class DefaultSession extends DefaultContext implements Session {
 
 	private static final Logger log = Logger.getLogger(DefaultSession.class);
 
-	private boolean closed;
+	private volatile boolean closed;
 
-	private ServerContext server;
+	private volatile ServerContext server;
 	protected Connection conn;
 
 	protected String sessionId;
@@ -58,13 +57,15 @@ public class DefaultSession extends DefaultContext implements Session {
 	@Override
 	@SuppressWarnings("unchecked")
 	public void send(Object message) {
+		if (server == null){
+//			throw new AccessException("session is destory!");
+			return;
+		}
 		if (server.getConnector().isRuning() == false) {
 			log.warn(this.getInetAddress()
 					+ " send msg failure,  Server is stoped!");
 			return;
 		}
-		if (server == null)
-			throw new AccessException("session is destory!");
 
 		// socket 已经被关闭
 		if (!conn.isClosed()) {
@@ -117,7 +118,7 @@ public class DefaultSession extends DefaultContext implements Session {
 	@Override
 	public synchronized MessageQueue getMessageOutputQueue() {
 		MessageQueue output = (MessageQueue) getAttribute(MESSAGE_QUEUE_OUT);
-		if (output == null) {
+		if (output == null&&server!=null) {
 			output = server.createMessageQueue();
 			setAttribute(MESSAGE_QUEUE_OUT, output);
 		}
@@ -127,7 +128,7 @@ public class DefaultSession extends DefaultContext implements Session {
 	@Override
 	public synchronized MessageQueue getMessageInputQueue() {
 		MessageQueue queue = (MessageQueue) getAttribute(MESSAGE_QUEUE_IN);
-		if (queue == null) {
+		if (queue == null&&server!=null) {
 			queue = server.createMessageQueue();
 			setAttribute(MESSAGE_QUEUE_IN, queue);
 		}
@@ -201,6 +202,21 @@ public class DefaultSession extends DefaultContext implements Session {
 
 	protected void setClosed(boolean bool) {
 		this.closed = bool;
+	}
+
+	public void destory() {
+		if(!isClosed()){
+			close();
+		}
+		if(contains(MESSAGE_QUEUE_OUT)){
+			getMessageOutputQueue().destory();
+			removeAttribute(MESSAGE_QUEUE_OUT);
+		}
+		if(contains(MESSAGE_QUEUE_IN)){
+			getMessageInputQueue().destory();
+			removeAttribute(MESSAGE_QUEUE_IN);
+		}
+		server = null;
 	}
 
 }

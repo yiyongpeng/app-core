@@ -12,7 +12,7 @@ import app.core.MessageQueue;
 public class DefaultMessageQueue implements MessageQueue {
 	private BlockingQueue<Object> queue;
 	private int capacity;
-	private int bytesSize;
+	private volatile int bytesSize;
 
 	public DefaultMessageQueue(int capacity) {
 		this.capacity = capacity;

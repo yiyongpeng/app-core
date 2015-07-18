@@ -63,6 +63,12 @@ public class DefaultConnection extends POJO implements Connection {
 
 	@Override
 	public WriteRequest getWriteRequest() {
+		if (writer == null)
+			synchronized (this) {
+				if(writer==null){
+					writer = session.getServerHandler().createWriteRequest(this);
+				}
+			}
 		return writer;
 	}
 
@@ -108,8 +114,7 @@ public class DefaultConnection extends POJO implements Connection {
 	}
 
 	private int getBufferCapacity() {
-		return (Integer) session.getCoverAttributeOfUser(
-				Session.IO_BUFFER_CAPACITY, Session.DEFAULT_IO_BUFFER_CAPACITY);
+		return (Integer) session.getCoverAttributeOfUser(Session.IO_BUFFER_CAPACITY, Session.DEFAULT_IO_BUFFER_CAPACITY);
 	}
 
 	private String getProtocol(ByteChannel sc) {
@@ -137,13 +142,11 @@ public class DefaultConnection extends POJO implements Connection {
 	private String getAddress(ByteChannel sc, boolean remote) {
 		if (sc instanceof DatagramChannel) {
 			DatagramSocket sock = ((DatagramChannel) sc).socket();
-			return remote ? sock.getInetAddress().getHostAddress() : sock
-					.getLocalAddress().getHostAddress();
+			return remote ? sock.getInetAddress().getHostAddress() : sock.getLocalAddress().getHostAddress();
 		}
 		if (sc instanceof SocketChannel) {
 			Socket sock = ((SocketChannel) sc).socket();
-			return remote ? sock.getInetAddress().getHostAddress() : sock
-					.getLocalAddress().getHostAddress();
+			return remote ? sock.getInetAddress().getHostAddress() : sock.getLocalAddress().getHostAddress();
 		}
 		return null;
 	}
@@ -156,15 +159,15 @@ public class DefaultConnection extends POJO implements Connection {
 				return;
 			closed = true;
 
-			if(session!=null&&session.getServerHandler()!=null){
-			Connector<Connection, Session> connector = this.session.getServerHandler().getConnector();
-			boolean selecting = connector.isSelecting((SelectableChannel) channel);
-			// close channel
-			channel.close();
-			//
-			if (selecting) {
-				((DefaultConnector) connector).onClosed(this);
-			}
+			if (session != null && session.getServerHandler() != null) {
+				Connector<Connection, Session> connector = this.session.getServerHandler().getConnector();
+				boolean selecting = connector.isSelecting((SelectableChannel) channel);
+				// close channel
+				channel.close();
+				//
+				if (selecting) {
+					((DefaultConnector) connector).onClosed(this);
+				}
 			}
 		} catch (IOException e) {
 		} finally {
@@ -184,17 +187,15 @@ public class DefaultConnection extends POJO implements Connection {
 
 	@Override
 	public void setSession(Session session) {
-		if (this.session!=session) {
+		if (this.session != session) {
 			this.session = session;
-			this.writer = session.getServerHandler().createWriteRequest(this);
 		}
 	}
 
 	@Override
 	public String getInetAddress() {
 		if (inetAddress == null)
-			inetAddress = getProtocol() + ":" + getRemoteAddress() + ":"
-					+ getRemotePort();
+			inetAddress = getProtocol() + ":" + getRemoteAddress() + ":" + getRemotePort();
 		return inetAddress;
 	}
 
@@ -240,8 +241,6 @@ public class DefaultConnection extends POJO implements Connection {
 
 	@Override
 	public String toString() {
-		return new StringBuilder("[").append(getLocalAddress()).append(":")
-				.append(getLocalPort()).append("  <=>  ")
-				.append(getInetAddress()).append("]").toString();
+		return new StringBuilder("[").append(getLocalAddress()).append(":").append(getLocalPort()).append("  <=>  ").append(getInetAddress()).append("]").toString();
 	}
 }

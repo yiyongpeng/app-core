@@ -1,6 +1,5 @@
 package app.core.impl;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -58,16 +57,15 @@ public class DefaultWriteRequest implements WriteRequest, Runnable {
 			// ---------- Send begin ---------
 			for (; (session = flushQueue.poll()) != null;) {
 				q = session.getMessageOutputQueue();
+				times = System.nanoTime();
 				for (; !q.isEmpty();) {
 					p = (ByteBuffer) q.getFirst();
 
-					times = System.nanoTime();
-					byteCount += sc.write(p);
-					times = System.nanoTime() - times;
-					nanoTime += times;
+					sc.write(p);
 
 					if (p.remaining() == 0) {
 						packetCount++;
+						byteCount += p.limit();
 						q.removeFirst();// 移除已发送数据包
 					} else {
 						try {
@@ -77,13 +75,17 @@ public class DefaultWriteRequest implements WriteRequest, Runnable {
 						}
 					}
 				}
+				times = System.nanoTime() - times;
+				nanoTime += times;
 			}
 			nomal = true;
 			// ----------- Send end ----------
-		} catch (IOException e) {
+		} catch (Throwable e) {
+			e.printStackTrace();
 			// 发送失败，复位，等待重连发送
-			p.position(0);
-			conn.close();
+			if(p!=null){
+				p.position(0);
+			}
 		} finally {
 			synchronized (this) {
 				if (nomal && this.flushQueue.size() > 0)

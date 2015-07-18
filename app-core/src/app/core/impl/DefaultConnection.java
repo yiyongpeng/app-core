@@ -31,12 +31,11 @@ public class DefaultConnection extends POJO implements Connection {
 
 	private String inetAddress;
 
-	private boolean closed;
-
 	private ByteBuffer recvBuffer;
 
-	private boolean writeBusy;
-	private WriteRequest writer;
+	private volatile boolean closed;
+	private volatile boolean writeBusy;
+	private volatile WriteRequest writer;
 
 	public void init(ByteChannel sc) {
 		this.channel = sc;
@@ -64,13 +63,6 @@ public class DefaultConnection extends POJO implements Connection {
 
 	@Override
 	public WriteRequest getWriteRequest() {
-		if (writer == null)
-			synchronized (this) {
-				if (writer == null) {
-					writer = session.getServerHandler()
-							.createWriteRequest(this);
-				}
-			}
 		return writer;
 	}
 
@@ -192,7 +184,10 @@ public class DefaultConnection extends POJO implements Connection {
 
 	@Override
 	public void setSession(Session session) {
-		this.session = session;
+		if (this.session!=session) {
+			this.session = session;
+			this.writer = session.getServerHandler().createWriteRequest(this);
+		}
 	}
 
 	@Override

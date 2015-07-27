@@ -1,7 +1,7 @@
 package app.core;
 
 public interface Session extends Context {
-	int DEFAULT_IO_BUFFER_CAPACITY = 1024;
+	int DEFAULT_IO_BUFFER_CAPACITY = 512*1024;
 
 	String MESSAGE_QUEUE_IN = "__MESSAGE_QUEUE_IN__";
 	String MESSAGE_QUEUE_OUT = "__MESSAGE_QUEUE_OUT__";

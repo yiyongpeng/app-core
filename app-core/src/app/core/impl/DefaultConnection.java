@@ -77,12 +77,15 @@ public class DefaultConnection extends POJO implements Connection {
 		ByteBuffer buff = getInputBuffer();
 		ReadableByteChannel sc = getSocketChannel();
 		int size = 0;
-		if ((size = sc.read(buff)) > 0) {
+		for (;(size = sc.read(buff)) > 0;) {
 			if (buff.remaining() == 0) {
 				ByteBuffer tmp = buff;
 				buff = ByteBufferUtils.create((int) (tmp.capacity() * 1.75));// 1.75倍自增
 				buff.put((ByteBuffer) tmp.flip());
 				setInputBuffer(buff);
+			}
+			if(buff.position()>=Session.DEFAULT_IO_BUFFER_CAPACITY){
+				break;
 			}
 		}
 		if (size == -1) {

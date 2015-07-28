@@ -232,7 +232,7 @@ public class DefaultServerHandler extends
 			MessageOutput queue = conn.getSession().getMessageInputQueue();
 			boolean intact = chain.getFilter().messageDecode(conn, buff, queue, chain);
 			buff.compact();// continue receive
-			return intact;
+			return intact||prev;
 		}
 		return false;
 	}

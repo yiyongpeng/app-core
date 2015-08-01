@@ -124,10 +124,11 @@ public class DefaultWriteRequest implements WriteRequest, Runnable {
 			if (!conn.isBusy()) {
 				conn.setBusy(true);
 				writer.execute(this);
-			} else {
-				// log.warn("Already flush, Connect[" + conn.getInetAddress()
-				// + "] is writing busy!");
-			}
+			} 
+//			else {
+//				 log.warn("Already flush, Connect[" + conn.getInetAddress()
+//				 + "] is writing busy!");
+//			}
 		}
 	}
 

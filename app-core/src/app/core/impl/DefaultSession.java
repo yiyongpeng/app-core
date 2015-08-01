@@ -3,8 +3,7 @@ package app.core.impl;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.SocketChannel;
 
-import org.apache.log4j.Logger;
-
+import app.core.AccessException;
 import app.core.Connection;
 import app.core.MessageOutput;
 import app.core.MessageQueue;
@@ -16,11 +15,9 @@ import app.filter.IFilterChain.IChain;
 
 public class DefaultSession extends DefaultContext implements Session {
 
-	private static final Logger log = Logger.getLogger(DefaultSession.class);
+	private boolean closed;
 
-	private volatile boolean closed;
-
-	private volatile ServerContext server;
+	private ServerContext server;
 	protected Connection conn;
 
 	protected String sessionId;
@@ -57,14 +54,9 @@ public class DefaultSession extends DefaultContext implements Session {
 	@Override
 	@SuppressWarnings("unchecked")
 	public void send(Object message) {
-		if (server == null){
-//			throw new AccessException("session is destory!");
-			return;
-		}
 		if (server.getConnector().isRuning() == false) {
-			log.warn(this.getInetAddress()
+			throw new AccessException(this.getInetAddress()
 					+ " send msg failure,  Server is stoped!");
-			return;
 		}
 
 		// socket 已经被关闭
@@ -73,7 +65,7 @@ public class DefaultSession extends DefaultContext implements Session {
 					&& ((SocketChannel) conn.getSocketChannel()).socket()
 							.isClosed()) {
 				conn.close();
-				return;
+				throw new AccessException(this+" send msg failed, Connection is closed.");
 			}
 		}
 		IChain<IProtocolEncodeFilter> chain = (IChain<IProtocolEncodeFilter>) server
@@ -116,22 +108,30 @@ public class DefaultSession extends DefaultContext implements Session {
 	}
 
 	@Override
-	public synchronized MessageQueue getMessageOutputQueue() {
-		MessageQueue output = (MessageQueue) getAttribute(MESSAGE_QUEUE_OUT);
-		if (output == null&&server!=null) {
-			output = server.createMessageQueue();
-			setAttribute(MESSAGE_QUEUE_OUT, output);
-		}
-		return output;
+	public MessageQueue getMessageOutputQueue() {
+		MessageQueue queue = (MessageQueue) getAttribute(MESSAGE_QUEUE_OUT);
+		if (queue == null)
+			synchronized (this) {
+				queue = (MessageQueue) getAttribute(MESSAGE_QUEUE_OUT);
+				if(queue==null){
+					queue = server.createMessageQueue();
+					setAttribute(MESSAGE_QUEUE_OUT, queue);
+				}
+			}
+		return queue;
 	}
 
 	@Override
-	public synchronized MessageQueue getMessageInputQueue() {
+	public MessageQueue getMessageInputQueue() {
 		MessageQueue queue = (MessageQueue) getAttribute(MESSAGE_QUEUE_IN);
-		if (queue == null&&server!=null) {
-			queue = server.createMessageQueue();
-			setAttribute(MESSAGE_QUEUE_IN, queue);
-		}
+		if (queue == null)
+			synchronized (this) {
+				queue = (MessageQueue) getAttribute(MESSAGE_QUEUE_IN);
+				if(queue==null){
+					queue = server.createMessageQueue();
+					setAttribute(MESSAGE_QUEUE_IN, queue);
+				}
+			}
 		return queue;
 	}
 
@@ -205,18 +205,17 @@ public class DefaultSession extends DefaultContext implements Session {
 	}
 
 	public void destory() {
-		if(!isClosed()){
+		if (!isClosed()) {
 			close();
 		}
-		if(contains(MESSAGE_QUEUE_OUT)){
-			getMessageOutputQueue().destory();
-			removeAttribute(MESSAGE_QUEUE_OUT);
+		MessageQueue out = (MessageQueue) removeAttribute(MESSAGE_QUEUE_OUT);
+		if (out != null) {
+			out.destory();
 		}
-		if(contains(MESSAGE_QUEUE_IN)){
-			getMessageInputQueue().destory();
-			removeAttribute(MESSAGE_QUEUE_IN);
+		MessageQueue in = (MessageQueue) removeAttribute(MESSAGE_QUEUE_IN);
+		if (in != null) {
+			in.destory();
 		}
-		server = null;
 	}
 
 }

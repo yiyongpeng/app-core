@@ -43,7 +43,7 @@ public class DefaultServerHandler extends
 
 	public static final String ATTR_MAX_MESSATE_QUEUE_CAPACITY = "__MAX_MESSATE_QUEUE_CAPACITY__";
 
-	public static int MAX_MESSAGE_QUEUE_CAPACITY = 256;
+	public static int MAX_MESSAGE_QUEUE_CAPACITY = 20;
 
 	private SessionFactory sessionFactory;
 

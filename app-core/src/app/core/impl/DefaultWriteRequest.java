@@ -12,6 +12,7 @@ import app.core.MessageInput;
 import app.core.MessageWriter;
 import app.core.Session;
 import app.core.WriteRequest;
+import app.util.ServerMode;
 
 public class DefaultWriteRequest implements WriteRequest, Runnable {
 	private MessageWriter<Connection, Session> writer;
@@ -55,18 +56,25 @@ public class DefaultWriteRequest implements WriteRequest, Runnable {
 		long times;
 		try {
 			// ---------- Send begin ---------
-			for (; (session = flushQueue.poll()) != null;) {
+			for (int i=0; (session = flushQueue.poll()) != null;) {
 				q = session.getMessageOutputQueue();
 				times = System.nanoTime();
-				for (; !q.isEmpty();) {
+				for (;!q.isEmpty();i++) {
 					p = (ByteBuffer) q.getFirst();
 
-					sc.write(p);
+					int size = sc.write(p);
+					
+					if(ServerMode.isDebug()){
+						log.debug(session+" write data: "+size+" bytes");
+					}
 
 					if (p.remaining() == 0) {
 						packetCount++;
 						byteCount += p.limit();
 						q.removeFirst();// 移除已发送数据包
+						if(ServerMode.isDebug()){
+							log.debug(session+" send packet["+i+"]: "+p.limit()+" bytes");
+						}
 					} else {
 						try {
 							Thread.sleep(10);// 网速不佳，延迟发送

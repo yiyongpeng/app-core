@@ -10,14 +10,19 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SocketChannel;
 
+import org.apache.log4j.Logger;
+
 import app.core.Connection;
 import app.core.Connector;
 import app.core.Session;
 import app.core.WriteRequest;
 import app.util.ByteBufferUtils;
 import app.util.POJO;
+import app.util.ServerMode;
 
 public class DefaultConnection extends POJO implements Connection {
+	private static final Logger log = Logger.getLogger(DefaultConnection.class);
+	
 	private Session session;
 
 	protected ByteChannel channel;
@@ -80,6 +85,9 @@ public class DefaultConnection extends POJO implements Connection {
 		ReadableByteChannel sc = getSocketChannel();
 		int size = 0;
 		for (;(size = sc.read(buff)) > 0;) {
+			if(ServerMode.isDebug()){
+				log.debug(toString()+" recv: "+size+" bytes");
+			}
 			if (buff.remaining() == 0) {
 				ByteBuffer tmp = buff;
 				buff = ByteBufferUtils.create((int) (tmp.capacity() * 1.75));// 1.75倍自增

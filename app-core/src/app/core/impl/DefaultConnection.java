@@ -24,10 +24,10 @@ import app.util.ServerMode;
 public class DefaultConnection extends POJO implements Connection {
 	private static final Logger log = Logger.getLogger(DefaultConnection.class);
 
-	private static final boolean TCP_NODELAY = true;
-	private static final int SEND_BUFFER_SIZE = 128*1024;
-	private static final int RECV_BUFFER_SIZE = 32*1024;
-	private static final int SOLINGER = 1;
+	public static boolean TCP_NODELAY = true;
+	public static int SEND_BUFFER_SIZE = 128*1024;
+	public static int RECV_BUFFER_SIZE = 32*1024;
+//	public static int SOLINGER = 1;
 	
 	private Session session;
 
@@ -65,7 +65,7 @@ public class DefaultConnection extends POJO implements Connection {
 				socket.setSendBufferSize(SEND_BUFFER_SIZE);
 				socket.setReceiveBufferSize(RECV_BUFFER_SIZE);
 				socket.setTcpNoDelay(TCP_NODELAY);
-				socket.setSoLinger(true, SOLINGER); 
+				//socket.setSoLinger(true, SOLINGER); 
 			} catch (SocketException e) {
 				e.printStackTrace();
 			}

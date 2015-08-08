@@ -37,7 +37,6 @@ public class DefaultConnector<R, S> implements Connector<R, S>, Runnable {
 	protected MessageWriter<R, S> writer;
 
 	private BlockingQueue<SelectionKey> queue4read;// 读
-	private BlockingQueue<SelectionKey> queue4write;// 写
 
 	private BlockingQueue<ServerSocketChannel> queue4server;// 服务端
 	private BlockingQueue<SocketChannel> queue4client;// 客户端
@@ -66,8 +65,6 @@ public class DefaultConnector<R, S> implements Connector<R, S>, Runnable {
 		this.notifier = notifer;
 
 		this.queue4read = new ArrayBlockingQueue<SelectionKey>(
-				QUEUE_REQUEST_MAX);
-		this.queue4write = new ArrayBlockingQueue<SelectionKey>(
 				QUEUE_REQUEST_MAX);
 
 		this.queue4server = new ArrayBlockingQueue<ServerSocketChannel>(
@@ -117,10 +114,12 @@ public class DefaultConnector<R, S> implements Connector<R, S>, Runnable {
 							if (key.isReadable()) {
 								key.cancel();
 								reader.processRequest(key);
-							} else if (key.isWritable()) {
-								key.cancel();
-								writer.processRequest(key);
-							} else if (key.isAcceptable()) {
+							} 
+//							else if (key.isWritable()) {
+//								key.cancel();
+//								writer.processRequest(key);
+//							} 
+							else if (key.isAcceptable()) {
 								notifier.fireOnAccept();
 								ss = ((ServerSocketChannel) key.channel());
 								if (ss.isOpen()) {
@@ -216,7 +215,6 @@ public class DefaultConnector<R, S> implements Connector<R, S>, Runnable {
 	protected void addRegistor() {
 		// 添加读写请求
 		addRegistors(queue4read, SelectionKey.OP_READ);
-		addRegistors(queue4write, SelectionKey.OP_WRITE);
 
 		// 处理自定义接收请求
 		while (queue4medley.isEmpty() == false)
@@ -317,7 +315,6 @@ public class DefaultConnector<R, S> implements Connector<R, S>, Runnable {
 		Set<SelectionKey> keysSet = new HashSet<SelectionKey>();
 		keysSet.addAll(selector.keys());
 		keysSet.addAll(queue4read);
-		keysSet.addAll(queue4write);
 		Iterator<SelectionKey> keys = keysSet.iterator();
 		while (keys.hasNext())
 			try {
@@ -370,15 +367,8 @@ public class DefaultConnector<R, S> implements Connector<R, S>, Runnable {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public void processWrite(SelectionKey key) {
-		try {
-			queue4write.put(key);
-			selector.wakeup();
-		} catch (Exception e) {
-			notifier.fireOnError(
-					(S) ((Connection) key.attachment()).getSession(), e);
-		}
+		writer.processRequest(key);
 	}
 
 	@SuppressWarnings("unchecked")

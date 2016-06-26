@@ -1,10 +1,10 @@
 package app.util;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 
 public final class ThreadContext {
 	public static final String SCOPE_APP = "__APP__";
@@ -110,7 +110,7 @@ public final class ThreadContext {
 
 	private static final int RECYCLE_MAX = 1024;
 
-	private static final Map<Thread, Map<Object, Object>> context = new ConcurrentHashMap<Thread, Map<Object, Object>>();
+	private static final Map<Thread, Map<Object, Object>> context = Collections.synchronizedMap(new HashMap<Thread, Map<Object, Object>>());
 	private static final BlockingQueue<Map<Object, Object>> recycle = new ArrayBlockingQueue<Map<Object, Object>>(
 			RECYCLE_MAX);
 
